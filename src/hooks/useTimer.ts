@@ -26,6 +26,32 @@ export function useTimer() {
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
+  // Sync timer duration when settings change (only when not running)
+  useEffect(() => {
+    if (timer.isRunning) return;
+
+    const mode = timer.mode;
+    let totalTime: number;
+
+    switch (mode) {
+      case 'work':
+        totalTime = settings.workTime * 60;
+        break;
+      case 'shortBreak':
+        totalTime = settings.shortBreak * 60;
+        break;
+      case 'longBreak':
+        totalTime = settings.longBreak * 60;
+        break;
+    }
+
+    // Only update if values actually changed
+    if (totalTime !== timer.totalTime) {
+      setTimerTimeLeft(totalTime);
+      setTimerTotalTime(totalTime);
+    }
+  }, [settings.workTime, settings.shortBreak, settings.longBreak, timer.mode]);
+
   useEffect(() => {
     const worker = new Worker(
       new URL('../workers/timer.worker.ts', import.meta.url),
